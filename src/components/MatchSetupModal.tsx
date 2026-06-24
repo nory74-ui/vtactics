@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
-import { ChevronDown, MapPin, Users, Copy, ChevronRight } from 'lucide-react';
+import { ChevronDown, MapPin, Users, X, Check } from 'lucide-react';
 
 interface MatchSetupModalProps {
   onClose: () => void;
   onStart: () => void;
   onGoToMembers?: () => void;
 }
+
+const SAMPLE_MEMBERS = [
+  { id: '1', number: 1, name: '佐伯 悠', position: 'S' },
+  { id: '2', number: 2, name: '三浦 亮', position: 'OH' },
+  { id: '3', number: 3, name: '高梨 陸', position: 'OH' },
+  { id: '4', number: 4, name: '森 大翔', position: 'MB' },
+  { id: '5', number: 5, name: '藤井 翔太', position: 'OP' },
+  { id: '6', number: 6, name: '長谷川 碧', position: 'MB' },
+];
 
 export function MatchSetupModal({ onClose, onStart, onGoToMembers }: MatchSetupModalProps) {
   const [rotationMode, setRotationMode] = useState<'rotation' | 'free'>('rotation');
@@ -14,9 +23,26 @@ export function MatchSetupModal({ onClose, onStart, onGoToMembers }: MatchSetupM
   const [venue, setVenue] = useState('プリセット');
   const [matchType, setMatchType] = useState('大会');
   const [setCount, setSetCount] = useState('3セットマッチ');
+  const [date, setDate] = useState('2026-06-16');
+  const [time, setTime] = useState('20:00');
+  
+  const [isStarterModalOpen, setIsStarterModalOpen] = useState(false);
+  const [selectedStarters, setSelectedStarters] = useState<string[]>([]);
+
+  const toggleStarter = (id: string) => {
+    setSelectedStarters(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleStartWithStarters = () => {
+    setIsStarterModalOpen(false);
+    onStart();
+  };
 
   return (
-    <div className="fixed inset-0 bg-[#f4f7fa] z-50 flex flex-col animate-in slide-in-from-bottom-full duration-300">
+    <>
+    <div className="fixed inset-0 bg-[#f4f7fa] z-40 flex flex-col animate-in slide-in-from-bottom-full duration-300">
       {/* Header */}
       <div className="flex items-center justify-between p-4 px-6 pt-12 shrink-0">
         <button 
@@ -53,8 +79,18 @@ export function MatchSetupModal({ onClose, onStart, onGoToMembers }: MatchSetupM
           <div className="flex items-center justify-between px-3 py-2 mb-2">
             <span className="text-[15px] font-bold text-slate-700 ml-1">日時</span>
             <div className="flex gap-2">
-              <span className="bg-slate-100 px-4 py-2 rounded-2xl text-[15px] font-medium text-slate-700">2026/06/16</span>
-              <span className="bg-slate-100 px-4 py-2 rounded-2xl text-[15px] font-medium text-slate-700">20:01</span>
+              <input 
+                type="date" 
+                value={date} 
+                onChange={(e) => setDate(e.target.value)} 
+                className="bg-slate-100 px-3 py-1.5 rounded-xl text-[14px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+              <input 
+                type="time" 
+                value={time} 
+                onChange={(e) => setTime(e.target.value)} 
+                className="bg-slate-100 px-3 py-1.5 rounded-xl text-[14px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
             </div>
           </div>
 
@@ -168,14 +204,17 @@ export function MatchSetupModal({ onClose, onStart, onGoToMembers }: MatchSetupM
             このまま記録を始める
           </button>
 
-          <div className="p-4 flex items-center justify-between border-b border-slate-100">
+          <div 
+            onClick={() => setIsStarterModalOpen(true)}
+            className="p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition cursor-pointer"
+          >
             <div>
               <h4 className="font-bold text-[16px] text-slate-900 mb-1">スタメンを先に決める</h4>
               <p className="text-[13px] font-bold text-slate-700 mb-1">(任意)</p>
-              <p className="text-[11px] font-medium text-slate-400">メンバー登録後に利用できます</p>
+              <p className="text-[11px] font-medium text-slate-400">メンバーを事前に選択して開始します</p>
             </div>
             <div className="w-[72px] h-[72px] bg-slate-100 rounded-2xl flex items-center justify-center">
-               <Users className="w-8 h-8 text-slate-300" />
+               <Users className="w-8 h-8 text-blue-500" />
             </div>
           </div>
 
@@ -204,5 +243,60 @@ export function MatchSetupModal({ onClose, onStart, onGoToMembers }: MatchSetupM
 
       </div>
     </div>
+    
+    {isStarterModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end animate-in fade-in duration-200">
+          <div className="bg-white w-full rounded-t-[32px] p-6 pb-auto max-h-[85vh] flex flex-col animate-in slide-in-from-bottom-8">
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="bg-blue-100 p-2 rounded-xl text-blue-600">
+                  <Users className="w-5 h-5" />
+                </div>
+                <h2 className="font-bold text-lg text-slate-800">スタメン設定</h2>
+              </div>
+              <button 
+                onClick={() => setIsStarterModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-[13px] font-medium text-slate-500 mb-4 leading-relaxed shrink-0">
+              出場する選手を選んでください。({selectedStarters.length} / 6名)
+            </p>
+
+            <div className="flex-1 overflow-y-auto mb-6 bg-slate-50 rounded-2xl p-2">
+              {SAMPLE_MEMBERS.map(m => (
+                <div 
+                  key={m.id} 
+                  onClick={() => toggleStarter(m.id)}
+                  className={`flex items-center p-3 mb-2 rounded-xl cursor-pointer transition ${selectedStarters.includes(m.id) ? 'bg-blue-100 border border-blue-200 shadow-sm' : 'bg-white border border-slate-100 hover:border-blue-200'}`}
+                >
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm font-mono shrink-0 shadow-sm ${selectedStarters.includes(m.id) ? 'bg-blue-500' : 'bg-slate-300'}`}>
+                    #{m.number}
+                  </div>
+                  <div className="flex-1 px-3">
+                    <h3 className="font-bold text-slate-800 text-[15px]">{m.name}</h3>
+                    <span className="text-[11px] font-bold text-slate-500">{m.position}</span>
+                  </div>
+                  {selectedStarters.includes(m.id) && (
+                     <Check className="w-5 h-5 text-blue-600" />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <button 
+              onClick={handleStartWithStarters}
+              className={`w-full font-bold py-4 rounded-full transition-transform text-[16px] shrink-0 ${selectedStarters.length > 0 ? 'bg-blue-600 text-white active:scale-[0.98]' : 'bg-slate-200 text-slate-400'}`}
+            >
+              スタメンを決定して開始
+            </button>
+            <div className="h-4 shrink-0" />
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MatchState, ReceptionQuality, Team } from '../types';
-import { Undo2, Plus, Minus, ChevronLeft, Lock, AlignRight, Play, RefreshCcw, LogOut, Edit3, AlertTriangle, X } from 'lucide-react';
+import { Undo2, Plus, Minus, ChevronLeft, Lock, AlignRight, Play, RefreshCcw, LogOut, AlertTriangle, X } from 'lucide-react';
 
 interface InputScreenProps {
   state: MatchState;

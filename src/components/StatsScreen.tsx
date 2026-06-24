@@ -1,6 +1,6 @@
 import React from 'react';
 import { MatchState, Rally, Team } from '../types';
-import { ChevronLeft, Share, Lightbulb, TrendingUp, Target, RotateCw, ClipboardList, ArrowRight } from 'lucide-react';
+import { ChevronLeft, Share, Lightbulb, Target, RotateCw, ClipboardList, ArrowRight } from 'lucide-react';
 
 interface StatsScreenProps {
   state: MatchState;

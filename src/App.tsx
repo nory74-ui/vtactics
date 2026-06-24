@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, BarChart2, Users, Settings, Share, Plus } from 'lucide-react';
+import { Home, BarChart2, Users, Settings, Plus } from 'lucide-react';
 import { MatchState, Rally, Team, ReceptionQuality } from './types';
 import { InputScreen } from './components/InputScreen';
 import { StatsScreen } from './components/StatsScreen';

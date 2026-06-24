@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, FileText, Plus, ChevronRight, X } from 'lucide-react';
+import { Search, FileText, Plus, ChevronRight } from 'lucide-react';
 import { Member } from '../types';
 
 const SAMPLE_MEMBERS: Member[] = [
