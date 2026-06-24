@@ -3,7 +3,7 @@ import { ChevronDown, MapPin, Users, X, Check } from 'lucide-react';
 
 interface MatchSetupModalProps {
   onClose: () => void;
-  onStart: () => void;
+  onStart: (settings: { date: string, time: string, venue: string, matchType: string, opponentName: string, starters: string[] }) => void;
   onGoToMembers?: () => void;
 }
 
@@ -23,8 +23,13 @@ export function MatchSetupModal({ onClose, onStart, onGoToMembers }: MatchSetupM
   const [venue, setVenue] = useState('プリセット');
   const [matchType, setMatchType] = useState('大会');
   const [setCount, setSetCount] = useState('3セットマッチ');
-  const [date, setDate] = useState('2026-06-16');
-  const [time, setTime] = useState('20:00');
+  const [opponentName, setOpponentName] = useState('');
+  const now = new Date();
+  const defaultDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const defaultTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  const [date, setDate] = useState(defaultDate);
+  const [time, setTime] = useState(defaultTime);
   
   const [isStarterModalOpen, setIsStarterModalOpen] = useState(false);
   const [selectedStarters, setSelectedStarters] = useState<string[]>([]);
@@ -37,7 +42,11 @@ export function MatchSetupModal({ onClose, onStart, onGoToMembers }: MatchSetupM
 
   const handleStartWithStarters = () => {
     setIsStarterModalOpen(false);
-    onStart();
+    onStart({ date, time, venue, matchType, opponentName, starters: selectedStarters });
+  };
+
+  const handleStartMatch = () => {
+    onStart({ date, time, venue, matchType, opponentName, starters: [] });
   };
 
   return (
@@ -68,7 +77,9 @@ export function MatchSetupModal({ onClose, onStart, onGoToMembers }: MatchSetupM
             <input 
               type="text" 
               placeholder="チーム名" 
-              className="text-right text-[15px] font-medium text-slate-400 focus:outline-none" 
+              value={opponentName}
+              onChange={(e) => setOpponentName(e.target.value)}
+              className="text-right text-[15px] font-medium text-slate-900 focus:outline-none" 
             />
           </div>
         </div>
@@ -197,7 +208,7 @@ export function MatchSetupModal({ onClose, onStart, onGoToMembers }: MatchSetupM
         <div className="bg-white rounded-[32px] p-2 shadow-sm mb-6 flex flex-col gap-2">
           
           <button 
-            onClick={onStart}
+            onClick={handleStartMatch}
             className="w-full bg-blue-600 text-white font-bold text-[17px] py-4 rounded-[24px] flex justify-center items-center gap-2 active:scale-[0.98] transition-transform shadow-sm"
           >
             <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-white border-b-[6px] border-b-transparent" />

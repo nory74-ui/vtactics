@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Home, BarChart2, Users, Settings, Plus } from 'lucide-react';
 import { MatchState, Rally, Team, ReceptionQuality } from './types';
 import { InputScreen } from './components/InputScreen';
@@ -8,18 +8,48 @@ import { SettingsTab } from './components/SettingsTab';
 import { MatchSetupModal } from './components/MatchSetupModal';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'matches' | 'members' | 'settings'>('members');
+  const [activeTab, setActiveTab] = useState<'home' | 'matches' | 'members' | 'settings'>('home');
   
   // Match flows: setup, active (input/stats), none
   const [matchScreen, setMatchScreen] = useState<'setup' | 'input' | 'stats' | null>(null);
 
+  const [savedMatches, setSavedMatches] = useState<MatchState[]>([]);
+
+  useEffect(() => {
+    const loaded = localStorage.getItem('v-tactics-matches');
+    if (loaded) {
+      try {
+        setSavedMatches(JSON.parse(loaded));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
+
   const [matchState, setMatchState] = useState<MatchState>({
+    id: 'initial',
     ourScore: 0,
     opponentScore: 0,
     currentServingTeam: 'us',
     currentRotation: 1,
     rallies: []
   });
+
+  // Auto-save active match state
+  useEffect(() => {
+    if (matchState.id !== 'initial') {
+      setSavedMatches(prev => {
+        const matchIndex = prev.findIndex(m => m.id === matchState.id);
+        if (matchIndex >= 0) {
+          const updated = [...prev];
+          updated[matchIndex] = matchState;
+          localStorage.setItem('v-tactics-matches', JSON.stringify(updated));
+          return updated;
+        }
+        return prev;
+      });
+    }
+  }, [matchState]);
 
   const handleScore = (winningTeam: Team, receiveQuality?: ReceptionQuality) => {
     const newRally: Rally = {
@@ -110,16 +140,37 @@ export default function App() {
     }));
   };
 
-  const handleStartMatch = () => {
+  const handleStartMatch = (settings: { date: string, time: string, venue: string, matchType: string, opponentName: string, starters: string[] }) => {
     // Reset state for new match
+    const newMatch: MatchState = {
+      id: Math.random().toString(36).substring(7),
+      ourScore: 0,
+      opponentScore: 0,
+      currentServingTeam: 'us',
+      currentRotation: 1,
+      rallies: [],
+      ...settings
+    };
+    setMatchState(newMatch);
+    
+    // Save to local storage
+    const updatedMatches = [newMatch, ...savedMatches];
+    setSavedMatches(updatedMatches);
+    localStorage.setItem('v-tactics-matches', JSON.stringify(updatedMatches));
+    
+    setMatchScreen('input');
+  };
+
+  const handleEndMatch = () => {
     setMatchState({
+      id: 'initial',
       ourScore: 0,
       opponentScore: 0,
       currentServingTeam: 'us',
       currentRotation: 1,
       rallies: []
     });
-    setMatchScreen('input');
+    setMatchScreen(null);
   };
 
   const renderActiveTab = () => {
@@ -140,21 +191,25 @@ export default function App() {
         );
       case 'matches':
         return (
-          <div className="flex flex-col h-full bg-[#f4f7fa] p-6">
+          <div className="flex flex-col h-full bg-[#f4f7fa] p-6 overflow-y-auto pb-24">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-3xl font-black text-slate-900 tracking-tight">試合</h1>
             </div>
-            {matchState.rallies.length > 0 && (
+            
+            {matchState.id !== 'initial' && matchState.rallies.length > 0 && (
                <div 
                  onClick={() => setMatchScreen('input')}
-                 className="bg-white p-5 rounded-3xl shadow-sm mb-4 active:scale-[0.98] transition cursor-pointer border border-slate-100"
+                 className="bg-white p-5 rounded-3xl shadow-sm mb-4 active:scale-[0.98] transition cursor-pointer border-2 border-blue-100 relative overflow-hidden"
                >
+                 <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl">
+                   記録中
+                 </div>
                  <div className="flex justify-between items-center mb-3">
                    <div className="flex gap-2">
-                     <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-sm">練習試合</span>
-                     <span className="text-xs font-bold text-slate-500">2026/06/16</span>
+                     <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-sm">{matchState.matchType || '試合'}</span>
+                     <span className="text-xs font-bold text-slate-500">{matchState.date}</span>
                    </div>
-                   <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                   <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse mr-8" />
                  </div>
                  <div className="flex items-center justify-between mb-1">
                    <span className="text-[15px] font-bold text-slate-800">自チーム</span>
@@ -166,6 +221,41 @@ export default function App() {
                  </div>
                </div>
             )}
+
+            <div className="space-y-3 mb-6">
+              <h2 className="text-sm font-bold text-slate-500 mb-2">過去の試合</h2>
+              {savedMatches.filter(m => m.id !== matchState.id).map(match => (
+                <div 
+                  key={match.id}
+                  onClick={() => {
+                    setMatchState(match);
+                    setMatchScreen('stats');
+                  }}
+                  className="bg-white p-5 rounded-3xl shadow-sm active:scale-[0.98] transition cursor-pointer border border-slate-100"
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex gap-2">
+                      <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-sm">{match.matchType || '試合'}</span>
+                      <span className="text-xs font-bold text-slate-500">{match.date}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[15px] font-bold text-slate-800">自チーム</span>
+                    <span className={`text-2xl font-black ${match.ourScore > match.opponentScore ? 'text-blue-600' : 'text-slate-800'}`}>{match.ourScore}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[15px] font-bold text-slate-800">{match.opponentName || '対戦相手'}</span>
+                    <span className={`text-2xl font-black ${match.opponentScore > match.ourScore ? 'text-blue-600' : 'text-slate-800'}`}>{match.opponentScore}</span>
+                  </div>
+                </div>
+              ))}
+              {savedMatches.length === 0 && (
+                <div className="text-center py-8 text-slate-400 font-medium text-sm">
+                  保存された試合はありません
+                </div>
+              )}
+            </div>
+
             <button 
               onClick={() => setMatchScreen('setup')}
               className="w-full border-2 border-dashed border-slate-300 rounded-3xl py-6 flex flex-col items-center justify-center gap-2 text-slate-500 font-bold active:bg-slate-100 transition"
@@ -207,7 +297,7 @@ export default function App() {
             >
               <div className="relative">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                {matchState.rallies.length > 0 && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#ebf0f5]" />}
+                {matchState.id !== 'initial' && <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#ebf0f5]" />}
               </div>
               <span className="text-[10px] font-bold">試合</span>
             </button>
@@ -251,11 +341,14 @@ export default function App() {
                 onUndo={handleUndo}
                 onRotate={handleRotate}
                 onSetServingTeam={handleSetServingTeam}
-                onEndMatch={() => setMatchScreen(null)} // Go back to root
+                onEndMatch={handleEndMatch} // Go back to root
               />
             )}
             {matchScreen === 'stats' && (
-              <StatsScreen state={matchState} />
+              <StatsScreen 
+                state={matchState} 
+                onClose={() => setMatchScreen(null)}
+              />
             )}
           </main>
           

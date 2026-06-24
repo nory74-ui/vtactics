@@ -39,9 +39,16 @@ export interface Rally {
 }
 
 export interface MatchState {
+  id: string;
   ourScore: number;
   opponentScore: number;
   currentServingTeam: Team;
   currentRotation: number; // 1-6
   rallies: Rally[];
+  date?: string;
+  time?: string;
+  venue?: string;
+  matchType?: string;
+  opponentName?: string;
+  starters?: string[];
 }

@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { MatchState, Rally, Team } from '../types';
-import { ChevronLeft, Share, Lightbulb, Target, RotateCw, ClipboardList, ArrowRight } from 'lucide-react';
+import { ChevronLeft, Share, Lightbulb, Target, RotateCw } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface StatsScreenProps {
   state: MatchState;
+  onClose?: () => void;
 }
 
-export function StatsScreen({ state }: StatsScreenProps) {
+export function StatsScreen({ state, onClose }: StatsScreenProps) {
   const rallies = state.rallies;
   const totalRallies = rallies.length;
   
@@ -30,6 +32,16 @@ export function StatsScreen({ state }: StatsScreenProps) {
   });
   
   const hasOppServes = opponentServes.length > 0;
+
+  const chartData = useMemo(() => {
+    let us = 0;
+    let op = 0;
+    return [{ name: '0', us: 0, opponent: 0 }, ...rallies.map((r, i) => {
+      if (r.winningTeam === 'us') us++;
+      else op++;
+      return { name: String(i + 1), us, opponent: op };
+    })];
+  }, [rallies]);
 
   // Rotation Stats
   const rotationStats = Array.from({ length: 6 }).map((_, i) => {
@@ -81,18 +93,31 @@ export function StatsScreen({ state }: StatsScreenProps) {
     <div className="flex flex-col h-full bg-[#0b0c15] text-slate-200 overflow-y-auto no-scrollbar pb-8 relative">
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center justify-between px-4 pt-6 pb-4 bg-[#0b0c15]/90 backdrop-blur-md">
-        <button className="w-10 h-10 rounded-full bg-slate-800/80 flex items-center justify-center border border-white/5 text-white">
+        <button 
+          onClick={onClose}
+          className="w-10 h-10 rounded-full bg-slate-800/80 flex items-center justify-center border border-white/5 text-white active:scale-95 transition-transform"
+        >
           <ChevronLeft className="w-6 h-6 ml-1" />
         </button>
         <span className="font-bold text-base tracking-widest text-slate-200">試合分析レポート</span>
-        <button className="w-10 h-10 rounded-full bg-slate-800/80 flex items-center justify-center border border-white/5 text-slate-300">
+        <button 
+          className="w-10 h-10 rounded-full bg-slate-800/80 flex items-center justify-center border border-white/5 text-slate-300 active:scale-95 transition-transform"
+          onClick={() => {
+            if (navigator.share) {
+              navigator.share({
+                title: '試合分析レポート',
+                text: `${state.date} ${state.matchType} vs${state.opponentName || '対戦相手'}\n自チーム ${state.ourScore} - ${state.opponentScore} 相手`
+              }).catch(console.error);
+            }
+          }}
+        >
           <Share className="w-5 h-5" />
         </button>
       </header>
 
       <div className="px-4">
         {/* Match Header Info */}
-        <div className="text-sm font-bold tracking-tight text-slate-400 mb-1">vs 宝南中学</div>
+        <div className="text-sm font-bold tracking-tight text-slate-400 mb-1">vs {state.opponentName || '対戦相手未設定'}</div>
         <div className="flex items-end gap-3 mb-6">
           <div className="text-[56px] font-mono font-bold text-white tracking-tighter leading-none shadow-sm">{state.ourScore}<span className="text-slate-600 mx-2 text-4xl">-</span>{state.opponentScore}</div>
           <div className="flex items-center gap-2 mb-2">
@@ -114,6 +139,27 @@ export function StatsScreen({ state }: StatsScreenProps) {
             <p className="text-[11px] text-blue-200/80 leading-relaxed">
               相手の分析を行う前に、自チームの「サイドアウト率・ブレイク率・サーブレシーブ」などの基礎数値が目標に達しているかを確認するのが鉄則です。
             </p>
+          </div>
+        </div>
+
+        {/* Score Progression Chart */}
+        <div className="bg-slate-800/50 rounded-3xl p-5 mb-8 shadow-sm border border-white/5">
+          <h3 className="font-bold text-sm text-slate-300 mb-4 tracking-widest">得点推移</h3>
+          <div className="h-[200px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickMargin={10} />
+                <YAxis stroke="#64748b" fontSize={10} tickMargin={10} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', fontSize: '12px', color: '#f8fafc' }}
+                  itemStyle={{ color: '#f8fafc' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                <Line type="stepAfter" dataKey="us" name="自チーム" stroke="#3b82f6" strokeWidth={3} dot={false} />
+                <Line type="stepAfter" dataKey="opponent" name={state.opponentName || "対戦相手"} stroke="#f43f5e" strokeWidth={3} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -245,63 +291,6 @@ export function StatsScreen({ state }: StatsScreenProps) {
             </p>
           </div>
         </div>
-
-        {/* 3. Vollyze Core: Match Record -> Practice Menu (試合後3分で練習を決める) */}
-        <div className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-3xl p-5 mb-8 shadow-lg border border-blue-500/20">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <ClipboardList className="w-5 h-5 text-blue-400" />
-              <h3 className="font-bold text-sm text-white tracking-widest">次の練習テーマを決定</h3>
-            </div>
-            <span className="text-[9px] font-bold bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/30">
-              STEP 3
-            </span>
-          </div>
-          
-          <p className="text-[11px] text-blue-100/70 mb-4 leading-relaxed font-medium">
-            バレー分析アプリの最大の目的は、<strong className="text-white">「試合後3分で次の練習テーマを1つ決める」</strong>ことです。本日のデータに基づき、以下の練習を推奨します。
-          </p>
-
-          <div className="bg-[#0b0c15]/60 rounded-2xl p-4 border border-white/5 space-y-3">
-            {sideOutRate < 60 && hasOppServes ? (
-              <div className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-1.5 shrink-0" />
-                <div>
-                  <h4 className="text-xs font-bold text-white mb-1">【最優先】A・Bパスからの決定率向上</h4>
-                  <p className="text-[10px] text-slate-400 leading-relaxed">
-                    サイドアウト率が60%を下回っています。レセプション練習に加え、Bパスからの攻撃（ライト・バックアタック）の連携を次回のメイン練習に設定しましょう。
-                  </p>
-                </div>
-              </div>
-            ) : maxConsecutiveLost >= 3 ? (
-              <div className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
-                <div>
-                  <h4 className="text-xs font-bold text-white mb-1">【最優先】連続失点のカット（ローテーション対策）</h4>
-                  <p className="text-[10px] text-slate-400 leading-relaxed">
-                    最大{maxConsecutiveLost}連続失点が発生しました。特定のローテで詰まる傾向があるため、当該ローテからのサイドアウト練習を重点的に行います。
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                <div>
-                  <h4 className="text-xs font-bold text-white mb-1">【推奨】トランジション・アタック（切り返し）の強化</h4>
-                  <p className="text-[10px] text-slate-400 leading-relaxed">
-                    サイドアウトは安定しています。さらなる得点力向上のため、ディグ（スパイクレシーブ）からのコンビネーション練習を次回のテーマに設定しましょう。
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            <button className="w-full mt-2 bg-blue-500 hover:bg-blue-600 active:scale-95 transition-all text-white font-bold text-xs py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
-              このテーマを練習メニューに登録
-              <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-        </div>
-
       </div>
     </div>
   );

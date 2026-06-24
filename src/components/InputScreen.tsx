@@ -106,11 +106,12 @@ export function InputScreen({ state, onScore, onUndo, onRotate, onSetServingTeam
           <div className={`absolute top-0 left-1/2 bottom-0 right-0 rounded-r-[32px] transition-colors duration-500 ${state.currentServingTeam === 'opponent' && !showServeSelect ? 'bg-red-50/50' : 'bg-transparent'}`} />
 
           <div className="flex flex-col items-center mb-6 relative z-10">
-            <div className="text-sm font-bold text-slate-500 mb-2">vs 対戦相手未設定</div>
-            <div className="flex gap-2">
-              <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-sm border border-blue-100">大会</span>
+            <div className="text-sm font-bold text-slate-500 mb-2">vs {state.opponentName || '対戦相手未設定'}</div>
+            <div className="flex gap-2 flex-wrap justify-center max-w-[280px]">
+              <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-sm border border-blue-100">{state.matchType || '大会'}</span>
               <span className="bg-purple-50 text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded-sm border border-purple-100">3セット</span>
               <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-sm border border-emerald-100">交代無制限</span>
+              <span className="bg-amber-50 text-amber-600 text-[10px] font-bold px-2 py-0.5 rounded-sm border border-amber-100">ローテ {state.currentRotation}</span>
             </div>
           </div>
 

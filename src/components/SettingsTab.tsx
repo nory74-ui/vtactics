@@ -35,7 +35,7 @@ export function SettingsTab() {
 
           <p className="text-[13px] text-slate-500 font-medium leading-relaxed px-1">
             {inputMode === 'detail' 
-              ? '詳細: 理由 / 打ち手など次の練習に繋がる情報を入力。' 
+              ? '詳細: 理由 / 打ち手など次のアクションに繋がる情報を入力。' 
               : '簡易: 得点のみ記録し、試合後の振り返りで詳細を追記。'}
           </p>
           <p className="text-[13px] text-slate-500 font-medium leading-relaxed px-1 mt-4">
@@ -59,7 +59,7 @@ export function SettingsTab() {
                   <h4 className="font-bold text-[16px] text-slate-900">バックアップを<br/>書き出す</h4>
                 </div>
                 <p className="text-[13px] text-slate-500 font-medium leading-relaxed pr-2">
-                  試合・選手・練習データをまとめて安全に保存できます。
+                  試合・選手データをまとめて安全に保存できます。
                 </p>
               </div>
             </div>

@@ -15,24 +15,6 @@ const puppeteer = require('puppeteer');
   await page.goto('http://localhost:3000', { waitUntil: 'networkidle2' });
   await new Promise(r => setTimeout(r, 500));
   
-  // click settings
-  await page.evaluate(() => {
-    const tabs = document.querySelectorAll('button');
-    for (let tab of tabs) {
-      if (tab.innerText.includes('設定')) tab.click();
-    }
-  });
-  await new Promise(r => setTimeout(r, 500));
-  
-  // click home
-  await page.evaluate(() => {
-    const tabs = document.querySelectorAll('button');
-    for (let tab of tabs) {
-      if (tab.innerText.includes('ホーム')) tab.click();
-    }
-  });
-  await new Promise(r => setTimeout(r, 500));
-  
   // click "新しい試合を記録"
   await page.evaluate(() => {
     const btns = document.querySelectorAll('button');
@@ -42,11 +24,11 @@ const puppeteer = require('puppeteer');
   });
   await new Promise(r => setTimeout(r, 500));
   
-  // click "さっそく記録をはじめる"
+  // click "このまま記録を始める"
   await page.evaluate(() => {
     const btns = document.querySelectorAll('button');
     for (let btn of btns) {
-      if (btn.innerText.includes('さっそく記録をはじめる')) btn.click();
+      if (btn.innerText.includes('このまま記録を始める')) btn.click();
     }
   });
   await new Promise(r => setTimeout(r, 500));
